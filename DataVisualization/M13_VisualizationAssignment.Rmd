@@ -1,0 +1,606 @@
+---
+title: "Visualization Portfolio Presentation"
+author: "Brett_Biscoll"
+date: '2022-11-30'
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: column
+    vertical_layout: scroll
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(flexdashboard)
+library(tidyverse)
+library(shiny)
+library(gganimate)
+library(gifski)
+library(transformr)
+library(plotly)
+library(ggplot2)
+library(ggrepel)
+
+#### Data Cleaning ####
+### Data Import
+
+wb_gdp_pc <- read_csv("WorldBank_GDP_Per_Capita.csv")
+
+### Selection of Post-Soviet States
+
+fsu_gdp_pc <- wb_gdp_pc %>%
+  filter(Country_Name == "Azerbaijan" | 
+         Country_Name == "Armenia" |
+         Country_Name == "Georgia" |
+         Country_Name == "Estonia" |
+         Country_Name == "Latvia" |
+         Country_Name == "Lithuania" |
+         Country_Name == "Belarus" |
+         Country_Name == "Ukraine" |
+         Country_Name == "Moldova" |
+         Country_Name == "Kazakhstan" |
+         Country_Name == "Turkmenistan" |
+         Country_Name == "Kyrgyz Republic" |
+         Country_Name == "Tajikistan" |
+         Country_Name == "Uzbekistan" |
+         Country_Name == "Russian Federation" 
+         ) %>% 
+  filter(Year >= 1991) %>%
+  print()
+
+fsu_gdp_pc_regions <- fsu_gdp_pc %>%
+  mutate(Region = 
+           ifelse(Country_Name == "Armenia", "Caucasus",
+           ifelse(Country_Name == "Georgia", "Caucasus",
+           ifelse(Country_Name == "Azerbaijan", "Caucasus",
+            ifelse(Country_Name == "Estonia", "Baltic",
+            ifelse(Country_Name == "Latvia", "Baltic",
+            ifelse(Country_Name == "Lithuania", "Baltic",
+            ifelse(Country_Name == "Russia", "Eastern Europe",
+            ifelse(Country_Name == "Ukraine", "Eastern Europe",
+            ifelse(Country_Name == "Belarus", "Eastern Europe",
+         ifelse(Country_Name == "Moldova", "Eastern Europe", "Central Asia"))))))))))
+         ) %>%
+  print()
+
+# GDP Per Capita Dataset 
+
+gdppc <- read_csv(
+  "API_NY.GDP.PCAP.CD_DS2_en_csv_v2_4570671.csv",
+  skip = 4
+)
+
+gdppc_long <- gdppc %>%
+  pivot_longer(
+    cols = 5:67,
+    names_to = "Year"
+  ) %>%
+  print()
+
+gdppc_long2 <- gdppc_long %>%
+  select(1,2,5,6
+  ) %>%
+  rename(
+    "Country_Code" = `Country Code`,
+    "Country_Name" = `Country Name`,
+    "GDP_Per_Capita" = `value`,
+    "Year" = Year,
+  ) %>%
+  filter(Year != "Country Code") %>%
+  mutate("Year" = as.numeric(Year),
+         "GDP_Per_Capita" = as.numeric(GDP_Per_Capita)) 
+
+# Democracy Dataset
+
+GSODI <- read_csv("GSoDI v5 (1975-2020).csv")
+  
+gsodi2 <- GSODI %>%
+  select(
+    ID_country_name,
+    ID_year,
+    "Representative_Government" = C_A1,
+    "Fundamental_Rights" = C_A2,
+    "Checks_On_Government" = C_A3,
+    "Impartial_Administration" = C_A4
+  ) %>%
+  print()
+
+## Join
+
+gdp_gsodi <- full_join(
+  x = gdppc_long2,
+  y = gsodi2,
+  by = c("Country_Name" = "ID_country_name", "Year" = "ID_year")
+)
+
+### National GDP Import 
+
+# GDP Dataset 
+
+gdp <- read_csv("WorldBank_GDP.csv")
+
+gdp_long <- gdp %>%
+  pivot_longer(
+    cols = 4:66,
+    names_to = "Year"
+  ) %>%
+  print()
+
+gdp_long2 <- gdp_long %>%
+  select( 
+    `Series Code`,
+    `Country Name`,
+    `value`,
+    Year,
+    `Series Name`
+  ) %>%
+  rename(
+    "Series_Code" = `Series Code`,
+    "Country_Name" = `Country Name`,
+    "GDP" = `value`,
+    "Year" = Year,
+    "Series_Name" = `Series Name`
+  ) %>%
+  filter(Year != "Country Code") %>%
+  mutate("Year" = as.numeric(substr(Year,1,4)),
+         #         "GDP" = as.numeric("GDP")
+  ) %>%
+  filter( GDP != "..") %>%
+  print()
+```
+
+
+```{r Visualization Code, echo = FALSE, warning = FALSE}
+#### Visualization; US Democratic Attributes
+
+us_dem_attr <- gsodi2 %>% 
+  filter(gsodi2$ID_country_name == "United States") %>%
+  pivot_longer(
+    cols = 3:6,
+    names_to = "Attribute"
+  ) %>%
+  ggplot(
+    aes(
+      x = ID_year,
+      y = value,
+      group = Attribute,
+      color = Attribute
+    )
+  ) + geom_line() +
+  theme_minimal() + 
+  ggtitle("United States, Democratic Attributes") + 
+  xlab("Year") + 
+  ylab("Score, out of 100%")
+
+## Visualization: GDP, In Trillions, By Region
+
+regional_gdp <- gdp_long2 %>%
+  filter(Year >= 1980) %>%
+  filter(
+    Country_Name == "East Asia & Pacific" |
+    Country_Name == "Europe & Central Asia" |
+    Country_Name == "Middle East & North Africa" |
+    Country_Name == "North America"      |
+    Country_Name == "Latin America & Caribbean" |
+    Country_Name == "South Asia" |
+    Country_Name == "Sub-Saharan Africa" 
+  ) %>% 
+  mutate(GDP = as.numeric(GDP)) %>%
+  ggplot(
+    data = ., 
+    aes(
+      x = Year,
+      y = GDP/1000000000000,
+      color = Country_Name
+    )
+    ) + geom_area(size = 1.5) + 
+  ylab("GDP, in Trillions") + 
+  ggtitle("GDP, by Region, In Trillions") + theme_dark()
+
+# Visualization: Boxplot of Representative Government Score, of all Nations, By Year
+
+repgovt_year<- gsodi2 %>% 
+  filter(ID_year %% 4 == 0) %>%
+  ggplot(
+    aes(
+      x = ID_year,
+      y = Representative_Government, 
+      group = ID_year
+    )
+  ) + geom_boxplot() +   
+  theme_minimal() + 
+  ggtitle("Boxplot of Representative Government Score of All Nations, by Year") +
+  xlab("Year") + 
+  ylab("Representative Government Score")
+
+```
+
+# The Attributes
+
+## United States Democratic Attributes
+
+### Plot
+
+```{r Visualization 5, echo = FALSE, warning = FALSE}
+us_dem_attr %>% print()
+```
+
+### Explanatory Note
+
+My Portfolio covers the democratic attributes of various countries, and the relationship they hold to economic performance in the form of GDP statistics. All data is sources from IIDEA and the World Bank. 
+
+The first visualization is a scatterplot showing the relationship between Fundamental Rights (as reported by IDEA) and GDP Per Capita amongst countries in the year 2020. 
+
+With respect to definition of the measurements on the axes, this visualization used GDP Per Capita, which is a measure of all goods produced and sold in a nation, divided by population. While not perfect (it does not take into consideration inequality, for example) it is often used as a rule of thumb for identifying living standards in a country. 
+
+For "Fundamental Rights", IDEA defines this as "measures individual liberties and access to resources."^[“Home: The Global State of Democracy Indices.” Home | The Global State of Democracy Indices, 
+https://www.idea.int/gsod-indices/] Furthermore, "It emphasizes liberal and social rights that support both fair representation and the vertical mechanism of accountability that the Representative Government attribute seeks to achieve." While somewhat subjective, IDEA uses a variety of objective metrics to define this measure, including access to trials, corruption, Civil liberties, freedom of expression, and so on. 
+
+ADditionally, I have added a trendline to indicate the relationship beyond the specific points. The relationship reveals a positive relationship between GDP per capita and success at providing fundamental rights; nations with worse than a .6 score on the Fundamental Rights metric seldom break the $50,000 per capita mark. For policymakers in developing nations, expanding and providing safeguards for fundamental rights should therefore be a priority when considering raising national wealth. 
+
+## G7 Nation's GDP from 2000 to Today
+
+### Stacked Bar Chart
+
+```{r Visualization 2, echo = FALSE, warning = FALSE}
+ggplot(
+  gdp_long2 %>%
+  filter(Year >= 2000,
+         Country_Name == "Canada" |
+         Country_Name ==  "France" |
+           Country_Name ==  "Germany" |
+           Country_Name ==  "Italy"|
+           Country_Name ==  "Japan"|
+           Country_Name ==  "United Kingdom"|
+           Country_Name ==  "United States"
+         ) , aes(x=Year, y=GDP %>% as.numeric()/1000000000000, fill=Country_Name)) + geom_bar(stat="identity", position="stack") + ggtitle("G7 Countries, Stacked Bar Chart Comparison from 2000-Present") + ylab("GDP, 2021 USD") + xlab("Year") + scale_fill_brewer(palette = "Set3")
+
+```
+
+### Explanatory Note
+
+The second visualization is a simple stacked bar chart, showing the performance of G7 nations from 2000 to today with respect to GDP, in Trillions. As a collective measure, we see an increase by perhaps a quarter overtime, as well as momentary dips for the 2008 Recession and the Pandemic.
+
+# Regional Trends
+
+## GDP Per Capita for Post-Soviet States, Grouped by Geographic Region
+
+### Line Chart 
+
+```{r Line-Chart, echo = FALSE, warning = FALSE}
+### Line Visualization
+
+ggplot(
+  data=fsu_gdp_pc_regions, 
+  aes(y = GDP_Per_Capita, 
+      x = Year,
+      group = Country_Name 
+      )) +
+  geom_line(aes(color = Region))+
+  geom_point(aes(color = Region)) + 
+  theme_dark() +
+##    axis.text.x = element_text(angle=90, vjust=.5, hjust=1)) +
+  xlab("Year") + 
+  ylab("GDP Per Capita, 2021 USD") +
+  labs(title = "GDP Per Capita for Post-Soviet States, Grouped by Geographic Region")
+
+```
+
+### Explanatory Note
+
+The visualization on the left is a comparison of economic performance on a person-by-person basis for the post-Soviet states, from 1991 to 2021. 
+
+The measures used are the Year and GDP Per Capita. GPD stands for 'Gross Domestic Product', which is defined as the collective monetary measure of all goods produced in a region/area. In this case, the measure is by country, and the period is year. The 'Per Capita' aspect divides the Gross Domestic Product by the total population of the country in question; the resulting figure is often used as a indicator for the quality of life in a country, though there must be some consideration for variation in cost-of-living expenses from country to country. 
+
+The grouping of data here is by geographic region, of which I categorized in four groups; the Baltics, the Caucasus, Central Asia, and Eastern Europe. Each of these groupings shared several economic characteristics; in very general terms, the Baltics took a path of greater integration with the European economy and engaged in liberalization; the Caucasus and Central Asian countries held greater ties to the Middle East and Asia; the Caucuasus moderately liberalized while Central Asia did not. Eastern Europe wavered and mostly did not liberalize (until recently in Ukraine). Lines are shaded by the region to which each country is associated.
+
+In drawing conclusions, I would highlight the greater performance of the Baltic states in terms of GDP per Capita as opposed to essentially all other post-Soviet states. The results in the other regions were mixed, but a noticable lack of performance can be seen in several of the Central Asian countries. Lastly, it is worth noting that the GDP per capita in the beginning did not have significant change; no country or region had a remarkable advantage in their starting position. 
+
+## GDP By Region
+
+### Area Chart
+
+```{r Visualization 6, echo = FALSE, warning = FALSE}
+regional_gdp %>% print()
+```
+
+### Explanatory Note
+
+This chart shows the growth of the world economy - in trillions - from 1980 to 2022. Each section represents once of the World Bank's geographic regions. Note the change in the relative slice of the chart East Asia and Pacific takes up in 2022, vs 1980. 
+
+# Relationships Between Measures 
+
+## GDP Per Capita vs Fundamental Rights
+
+### Scatterplot with Trendline
+
+```{r Visualization 1, echo = FALSE, warning = FALSE}
+
+# Scatterplot of GDP Per Capita vs Fundamental Rights 
+
+ggplot(data = gdp_gsodi %>% filter(Year == 2020),
+       aes(x = Fundamental_Rights, 
+           y = GDP_Per_Capita)) + geom_point(shape=4) + geom_smooth(method = "auto", se=TRUE, fullrange=FALSE, level=0.95) + ggtitle("GDP Per Capita vs Fundamental Rights") + ylab("GDP Per Capita, 2021 USD") + xlab("Fundamental Rights, Score from IDEA")
+
+```
+
+### Explanatory Note
+
+This visualization shows the Fundamental Rights variable vs GDP per capita in 2021; a trendline is added, which reveals a positive relationship between the two metrics for countries with fundamental rights scores over .6. 
+
+## Fundamental Rights vs Representative Government
+
+### Fundamental Rights vs Representative Government
+
+```{r Visualization 3, echo = FALSE, warning = FALSE}
+gdp_combo <- full_join(
+  x = gdp_gsodi,
+  y = gdp_long2,
+  by = c("Country_Name" = "Country_Name", "Year" = "Year")
+)
+
+### Visualizaion
+ggplot(data = gdp_combo %>% filter(Year == 2020 
+                                   & is.na(Representative_Government) != TRUE
+                                   & Country_Name != "North America"),
+       aes(x = Representative_Government,
+           y = Fundamental_Rights,
+           size = as.numeric(GDP)/1000000000000,
+           color = GDP_Per_Capita
+           )) + geom_point() + scale_size(range = c(1, 10), name="GDP in Trillions") + scale_color_gradient2(low = "black", 
+                                                                                                              mid = "green", 
+                                                                                                             high = "gold",
+                                                                                                             midpoint = 80000) + 
+  xlab("Representative Government Score") +
+  ylab("Fundamental Rights Score") +
+  ggtitle("Fundamental Rights vs Representative Government, with GDP and Per Capita Information Included") +
+  theme(legend.position = "left") +
+  geom_text_repel(gdp_combo %>% 
+                    filter(Year == 2020 
+                           & is.na(Representative_Government) != TRUE
+                           & Country_Name != "North America"
+                           & as.numeric(GDP)/1000000000000 > 3), 
+                  mapping=aes(label=Country_Name),
+                  nudge_x = -.4,
+                  nudge_y = .15,
+                  size = 3
+                  ) 
+```                 
+
+### Fundamental Rights Explanatory Note
+
+This chart takes the form of a scatterplot
+of the measures of Representative government and Fundamental rights for various countries in the year 2020; GDP again standing for Gross Domestic Product (the sum of all goods and services sold in an area) with Per Capita being that measure divided by overall population. As with before, all data comes from IDEA1 and the World Bank2. In addition to the scatterplot, I have included information on GDP in both overall
+and Per Capita forms; the size of each point is reflective of GDP, while coloration shows per capita GDP. What this reveals is how a nation such as China can have a large GDP without substantial ratings in either the fundamental rights or representative government score.
+
+## GDP Per Capita vs Impartial Administration
+
+```{r Visualization 10 Interactive Code, echo = FALSE, warning = FALSE}
+
+
+gsodi2 %>%
+  filter(ID_year == 2020) %>%
+  select(ID_country_name, Impartial_Administration) %>%
+  arrange(desc(Impartial_Administration)) %>%
+  print()
+
+gdp_gsodi %>%
+  filter(Year == 2020) %>%
+  filter(!is.na(Representative_Government)) %>%
+  arrange(desc(GDP_Per_Capita)) %>%
+##  print() %>%
+  ggplot(
+    data = .,
+    aes(
+      x = as.factor(Country_Name),
+      y = as.numeric(GDP_Per_Capita)
+    )) + geom_bar(stat="identity") %>% print()
+       
+#ggplot(
+#  data = gdp_gsodi 
+#    %>% filter(Year == 2020) 
+#    %>% filter(!is.na(Representative_Government))
+#    %>% mutate(Country_Name = fct_reorder(Country_Name, GDP_Per_Capita))
+#    %>% arrange(desc(GDP_Per_Capita)),
+#  aes(
+#    y = GDP_Per_Capita,
+#    x = Country_Name,
+#    color = Impartial_Administration
+#    )
+#  ) + geom_bar(stat = "identity") + 
+#  scale_colour_viridis() + 
+#  theme_dark() + 
+#  scale_x_discrete(labels = NULL, breaks = NULL) + 
+#  ggtitle("GDP Per Capita in 2020, Shaded by Impartial Admin.") +
+#  xlab("Country Name") +
+#  ylab("GDP Per Capita")
+```
+
+# Spatial Data
+
+## Interactive Map
+
+### Interactive Map 
+
+```{r Visualization 8 Interactive Code, echo = FALSE, warning = FALSE}
+
+world_map_base <- map_data("world")
+
+world_map_base2 <- world_map_base %>%
+  mutate(
+    region = recode(region, 
+                    "USA" = "United States",
+                    "UK" = "United Kingdom",
+                    "Vietnam" = "Viet Nam",
+                    "North Korea" = "Democratic People's Republic of Korea",
+                    "South Korea" = "Republic of Korea",
+                    "Ivory Coast" = "Cote d'Ivoire",
+                    "Czech Republic" = "Czechia",
+                    "Greenland" = "Denmark", ## Greenland is a 'Constituent Country' of Denmark
+                    "French Guiana" = "France", ## French Guiana is an Overseas Department of France
+    )
+  )
+
+ui <- fluidPage(
+  
+  # Application title
+  titlePanel("Fundamental Rights Attribute Rating from IDEA, 1980-2020"),
+  
+  # Sidebar with a slider input for number of bins 
+  sidebarLayout(
+    sidebarPanel(
+      sliderInput("my_year",
+                  "Year:",
+                  min = 1980,
+                  max = 2020,
+                  value = 2020)
+    ),
+    
+    # Show a plot of the generated distribution
+    mainPanel(
+      plotOutput("rep_gov_map")
+    )
+  )
+)
+
+server <- function(input, output) {
+  
+  output$rep_gov_map <- renderPlot({
+
+### Start for Dynamic Plot
+### 
+
+    gsodi_map_data <- 
+      left_join(
+        world_map_base2, 
+        gsodi2 %>% filter(ID_year == input$my_year), 
+        by=c("region" = "ID_country_name")
+      )
+    
+    ## Map Visualization 
+  
+    ggplot(
+      data = gsodi_map_data,
+      mapping = aes( 
+        x = long,
+        y = lat, 
+        group = group,
+        fill = Fundamental_Rights
+      )
+    ) + 
+      geom_polygon(
+        color = "black"
+      ) + 
+      theme_classic() + 
+      labs(
+        x = "Longitude",
+        y = "Latitude" #,
+      ) + 
+      theme(
+        axis.text.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank()) + 
+      scale_fill_binned(
+        type = "viridis",
+        breaks = c(
+          .2,
+          .3,
+          .4,
+          .5,
+          .6,
+          .7,
+          .8)
+      ) + ylab("Latitude")
+
+  })
+}
+
+###
+### End for Dynamic Plott
+
+# Run the application 
+shinyApp(ui = ui, server = server)
+```
+
+### Explanatory Note 
+
+This map shows the fundamental rights score for each country over the 1980 to 2020 time period; note that countries may be greyed out if they did not exist in the year the map is set to. By dragging the slider over time we can see regional changes and trends; for example, the liberalization of South America and South Korea, the Eastern European thaw, and the overall growth in Fundamental rights. 
+
+# Change Over Time
+
+### Interactive Map 
+
+```{r Visualization 9 Animation, echo = FALSE, warning = FALSE}
+
+quantiles <- gdp_gsodi %>%
+  filter(Year == 2020) %>%
+  filter(GDP_Per_Capita >= .01) %>%
+  select(GDP_Per_Capita) %>%
+  quantile(
+    probs = seq(.1, .9, by = .25), na.rm = TRUE)
+
+p <- gdp_gsodi %>%
+  filter(Year == 2020) %>%
+  filter(GDP_Per_Capita >= .01) %>%
+  as.data.frame(.) %>%
+  ggplot(
+    aes(
+      x = Representative_Government ,
+      y = Checks_On_Government, 
+      color = GDP_Per_Capita 
+    )
+) + geom_point() +  scale_color_steps2(
+  low = "red",
+  mid = "lightblue",
+  midpoint = 1000,
+  high = "darkblue",
+  breaks = c(
+    quantiles
+    )
+) + ggtitle("Representative Government vs Checks on Government") +
+  xlab("Representative Government") +
+  ylab("Checks On Government")
+p
+
+### Plotly Animation
+plotly_animation <- ggplotly(
+gdp_gsodi %>%
+  filter(GDP_Per_Capita >= .01) %>%
+  as.data.frame(.) %>%
+  ggplot(
+    aes(
+      x = Representative_Government ,
+      y = Checks_On_Government, 
+      color = GDP_Per_Capita,
+      frame = Year,
+      ids = Country_Name
+    )
+  ) + geom_point() +  scale_color_steps2(
+    low = "red",
+    mid = "lightblue",
+    midpoint = 1000,
+    high = "darkblue",
+    breaks = c(
+      quantiles
+    )
+  ) + ggtitle("Representative Government vs Checks on Government") +
+  xlab("Representative Government") +
+  ylab("Checks On Government")
+)
+
+plotly_animation
+
+```
+
+### Explanatory Note 
+
+This animation combines the attribute measures of Checks on Government and Representative(ness of) Government, as well as GDP per capita, over the 1980 to 2020 time frame. This animation shows several things; the growth of high GDP per capita countries, their rise over time, the introduction of many new countries in the early 90s, and an overall shift towards greater Checks on Government and Representation worldwide. 
+
+# Works Cited 
+
+### Works Cited
+
+“GDP (Current US$).” Data, https://data.worldbank.org/indicator/NY.GDP.MKTP.CD. 
+
+Home | the Global State of Democracy Indices - Idea. https://www.idea.int/gsod-indices/. 
