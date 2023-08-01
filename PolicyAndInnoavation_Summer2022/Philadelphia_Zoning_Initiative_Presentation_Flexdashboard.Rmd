@@ -1,0 +1,213 @@
+---
+title: "Philadelphia Zoning Initiative"
+author: "Brett_Biscoll"
+date: '2022-08-06'
+output: 
+  flexdashboard::flex_dashboard:
+      orientation: columns
+      vertical_layout: fill
+      self_contained: true
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+## Setting Global Variables...
+knitr::opts_chunk$set(echo = FALSE)
+```
+# Intro
+
+### City & Policy: Philadelphia & Affordable Housing
+
+- City
+  + Philadelphia, PA
+  + Reasoning: Personal familiarity; representative of Acela Corridor
+  + Prominence; 5th most populous US City
+- Policy Issue
+  + Affordable Housing Crisis
+  + Definition:  how to provide affordable housing to the people of the city 
+  + Ability to leverage "data-driven approaches to policy making" for the issue of housing offers significant potential towards creating a plan to grow the city
+
+### Civic Tech Project
+
+- The Housing Data Coalition
+  +The initiative as described on its own page as focused on making housing data 'more accessible and actionable for housing justice groups'.
+- Modifications
+  + Provide Transparency & Digital Tools
+  + Plan to offer structured information to inform zoning decisions and maked information that was previously not communicated commonly accessible knowledge
+  + Initial problem the Housing Data Coalition was trying to solve was related, 
+though distinct from the housing crisis; the "promotion of equal information access to counteract abuse in the real estate
+market." 
+  + Having access to greater information provides leverage for firms to set 
+real estate prices that may seem reasonable but in actually are a distortion
+- Planned Initiative
+  + Primarily, this type of initiative would necessarily leverage data from Philadelphia vs NYC, however much could otherwise remain the same
+  + The H.D.C's focus is rectifying the information imbalance between 'buyers' and 'sellers' in the housing market; mine will hopefully provide solutions to the effect of being able to lower prices at large 
+  + Towards that end I would leverage more private data from public listings (ex. generate models to determine what impacts new housing prices, or where public housing can be a competitive option), and focus on providing a blueprint for actionable solutions for local jurisdictions 
+
+# Literature 
+
+### Policy Literature
+
+- Article 1: “A Regional Analysis of the Relationship Between Housing Affordability and Business Growth”
+  + There is a statistically significant inverse relationship between housing unaffordability and a reduction in business openings for retail and professional
+  + When using the full dataset the relationship was uncovered for all sectors, including information
+  + The article finds that “The implication is that a persistent pattern of year-to-year reduction in the number of business establishments would have long-term adverse effects on business growth and economic development efforts due to worsening homeowner and renter cost burdens.” meaning the the economic damage from housing unaffordability worsens over time
+- Article 2: "Economic Elites and Support for Housing Affordability Policy: How a Housing-Health Belief Matters"
+  + Survey-based study
+  + Finds that a health connection could help to build wider support for beliefs regarding resolving the affordability crisis. 
+- Article 3: “The effect of housing loan subsidies on affordability: Evidence from Croatia”
+  + Examining Previously Implemented Policy
+  + Findings were that the subsidy program “...did not lead to an increase in the number of purchases of residential units and higher homeownership rates,”. 
+  + Additionally, the analysis on housing affordability indicates that “on average, significantly increased just around the time when the housing loans subsidies were Introduced"
+  + The program did not impact home ownership, and adversely affected affordability
+  + While this initiative may not have been sucessful, it gives key insights on the dynamics that could produce a technology initiative which does help resolve the affordability question.
+- Article 4: “Do Restrictive Land Use Regulations Make Housing More Expensive Everywhere ?”
+  + Looks into impact of regulations
+  + The ultimate findings were that “a 1-point increase in WRLURI-R values—the equivalent of trading Boise, Idaho's regulatory system for Hartford, Connecticut's—is associated with a $16,652 increase in 2016 median home values” 
+  + Essentially validating the idea that an increase in regulations increased housing costs
+
+# Visualization 
+
+## Charts 
+
+### Google Data Studio Visualization
+
+<iframe width="600" height="450" src="https://datastudio.google.com/embed/reporting/eb351a7e-1452-4658-be3b-535abb96648f/page/mjRxC" frameborder="0" style="border:0" allowfullscreen></iframe>
+
+- Figure 1
+  + Shows Market Value Over Total Livable Area
+  + Measure of Affordability
+  + Lowest Zoning Options: RM1, RM2 (Residential Multi-Family) and CMX2 and CMX1 (Commercial Mixed Use)
+- Figure 2
+  + Pie Chart Showing Comparative Number of Domiciles by Zoning
+  + Largest slices are RSA 3, 4, 5 (Single Family Attached)
+
+## Map
+
+### Mapbox 
+
+```{=html}
+
+<iframe width='100%' height='400px' src="https://api.mapbox.com/styles/v1/bbiscoll/cl5phkafg000714p9wa0p04kt.html?title=false&access_token=pk.eyJ1IjoiYmJpc2NvbGwiLCJhIjoiY2w1cGdvMWw4MG00ZjNwcGR6eDBydnR3biJ9.VigmKQisjWGI66dn8uyL8g&zoomwheel=false#11.79/39.94895/-75.15994" title="PHI: Market Value Quartile of Recent Assessment vs Zoning Type" style="border:none;"></iframe>
+
+```  
+
+Above is a mapbox visualization, combining data on the market value from recent assessments and the code for the local zoning district.
+
+Individual points represent the most recent assessment of individual properties, split by color into quartiles based on market value, with red being lowest, yellow and light green being the next highest, and dark green as the top quartile of price. A concentration of the highest is apparent within Center City, with lower prices properties to the north and northeast generally.
+
+Areas on the map are a shapefiles with different colors applied for each zoning code; 
+- Red for RM- the densest zoning; 
+- Pink and yellow are for RSA and RSD- residential single-family attached and detached, respectively; 
+- And green and cyan for residential and commercial mixed use. 
+
+The shading is intended to provide a comparison of the market values located within against nearby neighborhoods with different zoning types. 
+
+Combined with the above data set, we see a relationship between denser local zoning and lower-quartile pricing for residences. The goal is the statistically test this relationship, then identify key zoning blocs that are eligible for change to create more affordable housing. 
+
+# Statement
+
+### Policy Position Statement
+
+- Claim: The city of Philadelphia can counteract the lack of affordable housing by updating its zoning
+restrictions, the benefits of doing so can be seen from publicly accessible data
+  + Evidence from Policy literature showing higher regulations lead to higher prices
+  + Visualization shows less expensive per square foot cost for denser zoning codes
+  + Support from local nonprofits, businesses and media
+  + Nonprofits include The Housing Alliance of Pennsylvania, who compile information on the housing situation in each county; for Philadelphia County it reveals that there are only 32 rental homes available for every 100 low-income families, and that a model 2-bedroom home costs an hourly wage of \$24.232
+
+# Metrics 
+
+## Metrics Description
+
+### Metrics
+
+- Price Per Livable Square Foot
+  + Market Value / Total Livable Area 
+  + Measures affordability in a way comparable to different units (ex. single-family housing or an apartment complex)
+  + Compare housing for different space needs
+- Price Per Bedroom
+  + (Living Space Mortgage Payment or Rent) / (Median Area Monthly Salary * (.3)) <= 1 
+  + Attempts to answer the volume questions
+  + Using the rule of thumb that you should spend 30% of your salary on housing
+
+## Visualization
+
+### Shiny App Visualization
+
+```{r load-data, cache=TRUE, include=FALSE}
+
+library(ggplot2)
+library(tidyverse)
+
+properties_path <- "https://opendata-downloads.s3.amazonaws.com/opa_properties_public.csv"
+properties <- read_csv(properties_path)
+glimpse(properties)
+properties_base <- properties %>%
+  select(
+    market_value,
+    assessment_date, # to use only recent data
+    category_code,
+    category_code_description, # redundant to category code but keeping in description
+    census_tract, # match to census data
+    location,
+    market_value,
+    number_of_bedrooms,
+    number_of_bathrooms,
+    parcel_number, # match to Land Use data
+    total_area,
+    total_livable_area,
+    year_built, 
+    year_built_estimate,
+    zoning #,
+#    lat, # Geospatial Coordinates
+#    lng
+  )
+properties_base
+
+
+```
+
+```{r subset-data, include=FALSE}
+properties_most_recent_1000 <- properties_base %>% 
+  mutate(price_per_sq_foot = market_value/total_livable_area) %>%
+  top_n(n = 1000, wt = assessment_date) %>%
+  arrange(desc(assessment_date)) %>%
+  print()
+```
+
+```{r plot-data}
+renderPlot(
+ggplot(properties_most_recent_1000, aes(y=as.numeric(year_built), x=log(price_per_sq_foot), color = log(market_value))) + geom_point(size=2, shape=18) + ylim(1795, 2025) + ggtitle("Year Built vs (Log of) Price Per Square Foot") + scale_color_gradient(low = "paleturquoise", high =  "forestgreen") 
+)
+
+```
+
+# Conclusion
+
+### Explain the results of the Shiny app for your project. 
+
+- Looked into Price vs Year Built to determine impact on older, potentially historic, housing
+- Philadelphia prides itself on history
+- Shiny app revealed little correlation between recentness of build, price
+- Affordable housing can include older residences
+
+### Summarize the main conclusions from your research throughout the semester. 
+
+- Through academic literature and an analysis of average per-square foot value of different zoning codes, it is clearly the most important factor in housing affordability  
+- Changing the zoning codes from RSA (single-family) to RM (multi-family) and CMX (commercial mixed use) can provide more affordable housing options
+- Philadelphia's historic character can remain in place even with this change, through renovations 
+
+# Works Cited 
+
+### Works Cited
+
+- (“Housing Data Coalition.” Project - Housing Data Coalition, https://directory.civictech.guide/listing/housing-data-coalition. )
+-Bawazir, Abdullah Abdulaziz, et al. “Factors Affecting Female Labor Force Participation in the Middle East: An Empirical Evidence from Panel Data Approach.” The Journal of Developing Areas, vol. 56, no. 1, 2022, pp. 59–72., https://doi.org/10.1353/jda.2022.0010. 
+- Gauthier, Ryan Spak and Jamie. “Philly Needs More Affordable Housing. Is a New Bill a Solution?: Pro/Con.” Https://Www.inquirer.com, The Philadelphia Inquirer, 6 Jan. 2022, https://www.inquirer.com/opinion/commentary/affordable-housing-city-council-developers-bill-20220106.html. ,
+- Kunovac, Davor, and Ivan Zilic. “The Effect of Housing Loan Subsidies on Affordability: Evidence from Croatia.” Journal of Housing Economics 55 (2022): 101808. https://doi.org/10.1016/j.jhe.2021.101808. 
+- Landis, John, and Vincent J. Reina. “Do Restrictive Land Use Regulations Make Housing More Expensive Everywhere?.” Economic Development Quarterly 35, no. 4 (2021): 305–24. https://doi.org/10.1177/08912424211043500. 
+- Oluku, Uche, and Shaoming Cheng. “A Regional Analysis of the Relationship between Housing Affordability and Business Growth.” Economic Development Quarterly 35, no. 4 (2021): 269–86. https://doi.org/10.1177/08912424211006178. 
+- Ortiz, Selena E., Gary J. Adler, and Bobbie L. Johannes. “Economic Elites and Support for Housing Affordability Policy: How a Housing-Health Belief Matters.” Political Behavior 44, no. 2 (2020): 505–33. https://doi.org/10.1007/s11109-020-09623-4. 
+- Saffron, Inga. “Philadelphia Has an Affordable-Housing Crisis. Biden's Platform Has a Simple, but Radical, Solution.: Inga Saffron.” Https://Www.inquirer.com, The Philadelphia Inquirer, 28 Nov. 2020, https://www.inquirer.com/columnists/philadelphia-affordable-housing-rental-assistance-section-8-vouchers-biden-policy-parkway-encampment-trump-20201124.html.
+- Susanna Martin and Valerie Ross, For The Inquirer. “The Push for Affordable Development in West Philly Is Not Creating Real Affordability: Opinion.” Https://Www.inquirer.com, The Philadelphia Inquirer, 29 June 2021, https://www.inquirer.com/opinion/commentary/push-affordable-development-west-philly-is-not-creating-real-affordability-opinion-20210629.html. 
