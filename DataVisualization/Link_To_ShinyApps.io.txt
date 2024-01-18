@@ -1,3 +1,0 @@
-Please see this link for the hosted version of the flex dashboard:
-
-https://brettbiscoll.shinyapps.io/M14_VisualizationAssignment/
