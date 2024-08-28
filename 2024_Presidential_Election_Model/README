@@ -1,0 +1,31 @@
+Hello! 
+
+In this folder you will find my model of the 2024 Presidential election. A few notes:
+
+1) This is a work-in-progress, and a VERY rough model
+2) Currently, the model works as follows:
+  - Inputs: 
+    -National polling average
+    -Standard deviation of national average
+    -Expected mean swing by state (ex. a lean here represents an expected underpolling of a candidate)
+    -Standard deviation of the state-level swings
+    -PVI for each constituency (state, federal district, and congressional districts awarding electors) 
+  - Results:
+    -A winner for each state, the District of Columbia, and each of Maine and Nebraska's congressional districts
+    -A calculation of electors won by either party's candidate 
+    -An expected win percentage based on inputs
+  - Caveats:
+    -This model assumes no 3rd party candidates (not true) and that no 3rd party candidates could potentially win a state (uncertain but likely true)
+    -This model assumes the PVI lean being imported (currently from 2022) is acccurate- it has likely shifted somewhat
+    -This model assumes state-level swings are independent- this is definitely incorrect, but simpler to simulate
+    -Finally, this assumes no state-level refusal to certify electors, faithless electors, electors writing 'John Ewards', etc cetera
+3) Future additions:
+  - Correlate state-level results
+  - Automatically ingest polling averages (is there an API still offering this?)
+  - Create a shiny app UI 
+  - Summarization of results- ex. which combos are most common for winners etc 
+
+Please feel free to reach out with any questions or recommendations. 
+
+Thanks!,
+B
