@@ -1,1 +1,115 @@
+# STV Election Tools
+
+A pair of R scripts for simulating and running real [Single Transferable Vote (STV)](https://en.wikipedia.org/wiki/Single_transferable_vote) elections — one built as a learning tool, the other as a practical election runner for anyone who needs to conduct a small-scale STV count.
+
+STV is a ranked-choice voting system used in Irish general elections, Scottish local government, the Portland City Council, and countless club and society committees. Despite being widely used, accessible tooling for it is surprisingly sparse and it is not well understood. 
+---
+
+## How STV Works (Brief)
+
+STV is one of the most widely adopted alternatives to first past the post (FPTP, aka plurality) voting in the English speaking world. It uses voter rankings of candidates to elect a multiwinner delegation which is generally proportional and with a smaller ratio of wasted ballots than in usual FPTP elections. 
+
+1. Voters rank candidates in order of preference (1st, 2nd, 3rd…)
+2. A **Droop quota** is calculated: `floor(total_votes / (seats + 1)) + 1`
+3. Any candidate reaching the quota is **elected**; their surplus votes transfer to next preferences
+4. If no one reaches the quota, the candidate with the fewest votes is **eliminated** and their votes redistribute
+5. Repeat until all seats are filled
+
+---
+## Files
+
+| File | Description |
+|---|---|
+| `STV_Simulator.R` | Simulates a large-scale STV election with synthetic ballots and exports a PDF results summary |
+| `Election_Runner.R` | Run a real STV election — enter your candidates and ballots directly in the script |
+| `stv_results.pdf` | Example PDF output from the simulator |
+
+---
+
+## STV_Simulator.R
+
+A from-scratch implementation of the STV algorithm designed as a **learning tool and demonstration**. It generates a configurable population of synthetic voters with realistic voting behaviour (party-line voters, split-ticket voters, random voters) and runs them through a full multi-seat STV count.
+
+**What it demonstrates:**
+- The Droop quota calculation
+- Surplus transfer after a candidate is elected
+- Elimination and vote redistribution
+- Tiebreak handling (random draw, flagged in output)
+- A full count-by-count audit trail
+
+**Output:** A colour-coded PDF summary table (`stv_results.pdf`) showing every candidate's vote tally at each count, with elected and eliminated candidates clearly highlighted. See [Example Output](#example-output) below.
+
+**Key configuration** (top of script):
+```r
+N_SEATS  <- 3       # Seats up for election
+N_VOTERS <- 1000    # Simulated voters
+set.seed(42)        # For reproducibility — remove for a live random run
+```
+
+---
+
+## Election_Runner.R
+
+A practical tool for **running a real election**. There is no interface to learn — just open the script, fill in three sections, and run it.
+
+**Step 1 — Set the number of seats:**
+```r
+N_SEATS <- 3
+```
+
+**Step 2 — List your candidates:**
+```r
+candidates <- c(
+  "Alice",
+  "Bobby",
+  "Celine"
+)
+```
+
+**Step 3 — Enter the ballots:**
+```r
+ballots <- list(
+  5 %x% ballot("Alice", "Bobby", "Celine"),   # 5 identical ballots
+  4 %x% ballot("Bobby", "Celine"),
+  1 %x% ballot("Celine")
+)
+```
+
+The script validates all ballots before running — it will flag any unrecognised names or duplicate preferences and stop before the count begins. Once run, it prints a full count-by-count breakdown to the console and flags any tiebreaks that should be recorded in meeting minutes.
+
+**The random seed** at the top of the script controls tiebreak and surplus draw outcomes. Record the seed alongside your results so the count can be independently verified if challenged.
+
+---
+
+## Example Output
+
+See [`stv_results.pdf`](./stv_results.pdf) for a full example of the simulator output.
+
+The PDF includes:
+- Election metadata (seats, voters, quota, number of counts)
+- Count-by-count vote totals for every candidate
+- Green highlighting for the count a candidate was elected; red for elimination
+- Elected seats summary
+- Tiebreak warnings where applicable
+
+
+---
+
+## Requirements
+
+Base R only — no packages to install beyond `grid`, which ships with R.
+
+---
+
+## Limitations & Notes
+
+- Surplus transfers use **random sampling** of whole ballots rather than fractional transfer (as used in official Irish elections). This is a known simplification and is flagged in the output.
+- Tiebreaks are resolved by random draw and clearly logged — these should always be recorded in meeting minutes for auditability.
+- Built as a learning project: the code prioritises readability over optimisation.
+
+---
+
+## About
+
+Part of a broader elections data portfolio, alongside a [Presidential Election Visualization](../presidential-election-visualization) project. Feedback welcome.
 
