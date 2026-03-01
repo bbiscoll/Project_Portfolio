@@ -1,0 +1,42 @@
+
+markdown
+
+# 🗳️ Presidential Election Visualization
+
+R code for analyzing and visualizing U.S. Presidential Election results through choropleth maps and static graphics. This project explores how electoral data can be transformed into informative visuals.
+
+## Overview
+
+Focuses making election data legible and readable. 
+
+## Features
+
+- **Data wrangling pipeline** — Raw election data cleaned, reshaped, and joined with geographic data for analysis
+- **Choropleth mapping** — State and/or county-level election results rendered as color-scaled geographic maps
+- **Static export-ready graphics** — Clean, publication-quality visuals suitable for reports or presentations
+
+## Tech Stack
+
+| Tool | Purpose |
+|---|---|
+| R | Core analysis and visualization |
+| ggplot2 | Charting and map rendering |
+| tidyverse | Data cleaning and transformation |
+| sf / maps | Geospatial data handling |
+
+## Getting Started
+
+```r
+# Clone the repo, then install dependencies
+install.packages(c("tidyverse", "ggplot2", "sf"))
+
+# Run the main visualization script
+source("main.R")
+```
+
+## Data Sources
+https://electionlab.mit.edu/
+
+## About
+
+Built as part of a personal data visualization portfolio. Feedback and contributions welcome.
